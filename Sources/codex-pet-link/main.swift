@@ -11,7 +11,7 @@ private final class RuntimeController: NSObject {
     private let mode: SourceMode
     private let watcher: CodexSessionWatcher
     private let peripheral = CodexBLEPeripheral()
-    private var sequence: UInt32 = 0
+    private var sequencer = StatusSequencer()
     private var fakeIndex = -1
     private var timer: Timer?
 
@@ -35,7 +35,6 @@ private final class RuntimeController: NSObject {
     }
 
     @objc private func tick() {
-        sequence &+= 1
         switch mode {
         case .fake:
             let states = CodexTaskState.allCases
@@ -43,8 +42,8 @@ private final class RuntimeController: NSObject {
             publish(state: states[fakeIndex])
         case .codex:
             do {
-                var snapshot = try watcher.pollOnce()
-                snapshot.sequence = sequence
+                let status = try watcher.pollOnce()
+                let snapshot = sequencer.snapshot(state: status.state, progress: status.progress)
                 peripheral.publish(snapshot)
                 print("codex-pet-link: state=\(snapshot.state)")
             } catch {
@@ -55,12 +54,7 @@ private final class RuntimeController: NSObject {
     }
 
     private func publish(state: CodexTaskState) {
-        peripheral.publish(CodexStatusSnapshot(
-            state: state,
-            progress: nil,
-            sequence: sequence,
-            updatedAt: Date()
-        ))
+        peripheral.publish(sequencer.snapshot(state: state))
         print("codex-pet-link: state=\(state)")
     }
 

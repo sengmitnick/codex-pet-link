@@ -26,3 +26,27 @@ public struct CodexStatusSnapshot: Equatable, Sendable {
         self.updatedAt = updatedAt
     }
 }
+
+public struct StatusSequencer: Sendable {
+    private var sequence: UInt32 = 0
+    private var previousState: CodexTaskState?
+
+    public init() {}
+
+    public mutating func snapshot(
+        state: CodexTaskState,
+        progress: UInt8? = nil,
+        at date: Date = Date()
+    ) -> CodexStatusSnapshot {
+        if previousState != state {
+            sequence &+= 1
+            previousState = state
+        }
+        return CodexStatusSnapshot(
+            state: state,
+            progress: progress,
+            sequence: sequence,
+            updatedAt: date
+        )
+    }
+}
