@@ -17,7 +17,21 @@ final class ActivityStoreTests: XCTestCase {
         XCTAssertEqual(snapshot.primary?.sessionID, "needs-input")
         XCTAssertEqual(snapshot.primary?.title, "连接 Codex")
         XCTAssertEqual(snapshot.additionalCount, 1)
+        XCTAssertEqual(snapshot.activities.map(\.sessionID), ["needs-input", "running"])
         XCTAssertTrue(try inbox.pendingFiles().isEmpty)
+    }
+
+    func testSnapshotCarriesEveryVisibleActivityInPetPriorityOrder() {
+        var store = ActivityStore()
+        store.apply(event(session: "running", title: "实现蓝牙", state: .running, phase: .runningCommand, time: 40))
+        store.apply(event(session: "ready", title: "更新文档", state: .ready, phase: .completed, time: 30))
+        store.apply(event(session: "blocked", title: "修复构建", state: .blocked, phase: .problem, time: 20))
+        store.apply(event(session: "input", title: "确认方案", state: .needsInput, phase: .waitingApproval, time: 10))
+
+        let snapshot = store.snapshot(now: Date(timeIntervalSince1970: 50))
+
+        XCTAssertEqual(snapshot.activities.map(\.sessionID), ["input", "blocked", "ready", "running"])
+        XCTAssertEqual(snapshot.additionalCount, 3)
     }
 
     func testNewEventWithoutTitleKeepsExistingTitle() {

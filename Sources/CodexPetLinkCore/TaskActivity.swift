@@ -9,6 +9,9 @@ public enum TaskPhase: UInt8, Codable, CaseIterable, Sendable {
     case waitingApproval = 5
     case completed = 6
     case problem = 7
+    case ranCommand = 8
+    case modifiedFiles = 9
+    case searched = 10
 }
 
 public struct TaskActivity: Codable, Equatable, Sendable {
@@ -40,10 +43,18 @@ public struct TaskActivity: Codable, Equatable, Sendable {
 }
 
 public struct TaskActivitySnapshot: Equatable, Sendable {
+    public var activities: [TaskActivity]
     public var primary: TaskActivity?
     public var additionalCount: UInt8
 
+    public init(activities: [TaskActivity]) {
+        self.activities = activities
+        primary = activities.first
+        additionalCount = UInt8(clamping: max(0, activities.count - 1))
+    }
+
     public init(primary: TaskActivity?, additionalCount: UInt8 = 0) {
+        activities = primary.map { [$0] } ?? []
         self.primary = primary
         self.additionalCount = additionalCount
     }

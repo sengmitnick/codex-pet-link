@@ -70,18 +70,22 @@ private final class RuntimeController: NSObject {
         }
 
         var activity = store.snapshot(now: now, titlesEnabled: titlesEnabled)
-        if let primary = activity.primary {
-            resolveOfficialTitleIfNeeded(for: primary, now: now)
+        for visibleActivity in activity.activities {
+            resolveOfficialTitleIfNeeded(for: visibleActivity, now: now)
+        }
+        if !activity.activities.isEmpty {
             activity = store.snapshot(now: now, titlesEnabled: titlesEnabled)
         }
         let state = activity.primary?.state ?? fallbackState
         let status = sequencer.snapshot(state: state, at: now)
         peripheral.publish(status, activity: activity)
-        let logSignature = "\(state.rawValue)|\(activity.primary?.phase.rawValue ?? 0)|\(activity.primary?.title.count ?? 0)|\(activity.additionalCount)"
+        let logSignature = activity.activities
+            .map { "\($0.state.rawValue):\($0.phase.rawValue):\($0.title.count)" }
+            .joined(separator: "|")
         if logSignature != lastLogSignature {
             lastLogSignature = logSignature
             Self.writeLog(
-                "state=\(state) phase=\(activity.primary?.phase.rawValue ?? 0) titleLength=\(activity.primary?.title.count ?? 0) additional=\(activity.additionalCount)"
+                "state=\(state) activities=\(activity.activities.count) phase=\(activity.primary?.phase.rawValue ?? 0) titleLength=\(activity.primary?.title.count ?? 0)"
             )
         }
     }
@@ -121,7 +125,14 @@ private final class RuntimeController: NSObject {
             phase: sample.2,
             updatedAt: Date()
         )
-        let activity = TaskActivitySnapshot(primary: task)
+        let secondary = TaskActivity(
+            sessionID: "fake-secondary",
+            title: "优化引导",
+            state: .running,
+            phase: .ranCommand,
+            updatedAt: Date().addingTimeInterval(-1)
+        )
+        let activity = TaskActivitySnapshot(activities: [task, secondary])
         peripheral.publish(sequencer.snapshot(state: sample.1), activity: activity)
         Self.writeLog("fake state=\(sample.1) phase=\(sample.2) titleLength=\(sample.0.count)")
     }

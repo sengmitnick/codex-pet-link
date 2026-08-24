@@ -62,4 +62,29 @@ final class ActivityPacketTests: XCTestCase {
         XCTAssertTrue(output.title.allSatisfy { $0 == "😀" })
         XCTAssertLessThanOrEqual(frames.count, 6)
     }
+
+    func testV2EncodesAndReassemblesEveryTaskOutOfOrder() throws {
+        let tasks = [
+            BLEActivityItem(state: .needsInput, phase: .waitingApproval, title: "赛博宠物：确认方案"),
+            BLEActivityItem(state: .running, phase: .ranCommand, title: "赛博宠物：连接 Codex"),
+            BLEActivityItem(state: .running, phase: .modifiedFiles, title: "赛博宠物：优化引导"),
+        ]
+
+        let frames = ActivityListPacket.encode(tasks, sequence: 0x3412)
+        let decoded = try ActivityListPacket.decode(frames.reversed())
+
+        XCTAssertEqual(decoded, tasks)
+        XCTAssertTrue(frames.allSatisfy { $0.count <= 20 })
+        XCTAssertEqual([UInt8](frames[0].prefix(4)), [0xC8, 2, 0x12, 0x34])
+    }
+
+    func testV2RejectsIncompleteSnapshotWithoutReplacingIt() {
+        let frames = ActivityListPacket.encode([
+            BLEActivityItem(state: .running, phase: .searched, title: "查找资料"),
+            BLEActivityItem(state: .ready, phase: .completed, title: "完成实现"),
+        ], sequence: 9)
+
+        XCTAssertGreaterThan(frames.count, 1)
+        XCTAssertThrowsError(try ActivityListPacket.decode(frames.dropLast()))
+    }
 }

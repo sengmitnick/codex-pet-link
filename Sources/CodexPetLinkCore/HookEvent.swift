@@ -84,7 +84,14 @@ public enum HookEvent {
                 updatedAt: now
             )
         case .postToolUse:
-            return NormalizedHookEvent(sessionID: sessionID, turnID: turnID, state: .running, phase: .thinking, updatedAt: now)
+            let tool = string("tool_name", "toolName", "name", in: root) ?? ""
+            return NormalizedHookEvent(
+                sessionID: sessionID,
+                turnID: turnID,
+                state: .running,
+                phase: completedPhase(forTool: tool),
+                updatedAt: now
+            )
         case .permissionRequest:
             return NormalizedHookEvent(sessionID: sessionID, turnID: turnID, state: .needsInput, phase: .waitingApproval, updatedAt: now)
         case .stop:
@@ -106,6 +113,15 @@ public enum HookEvent {
             return .searching
         }
         return .thinking
+    }
+
+    private static func completedPhase(forTool value: String) -> TaskPhase {
+        switch phase(forTool: value) {
+        case .runningCommand: return .ranCommand
+        case .modifyingFiles: return .modifiedFiles
+        case .searching: return .searched
+        default: return .thinking
+        }
     }
 
     private static func string(_ keys: String..., in root: [String: Any]) -> String? {

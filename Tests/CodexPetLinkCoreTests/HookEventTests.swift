@@ -52,6 +52,21 @@ final class HookEventTests: XCTestCase {
         XCTAssertEqual(failed.phase, .problem)
     }
 
+    func testPostToolUseKeepsTheLatestCompletedActivity() throws {
+        let cases: [(String, TaskPhase)] = [
+            ("exec_command", .ranCommand),
+            ("apply_patch", .modifiedFiles),
+            ("web__run", .searched),
+        ]
+
+        for (tool, phase) in cases {
+            let input = Data(#"{"session_id":"s1","tool_name":"\#(tool)"}"#.utf8)
+            let event = try HookEvent.parse(kind: .postToolUse, data: input, now: date)
+            XCTAssertEqual(event.state, .running)
+            XCTAssertEqual(event.phase, phase)
+        }
+    }
+
     func testRequiresSessionIdentifier() {
         XCTAssertThrowsError(
             try HookEvent.parse(kind: .stop, data: Data(#"{"turn_id":"t1"}"#.utf8), now: date)

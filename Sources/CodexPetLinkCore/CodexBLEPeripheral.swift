@@ -150,7 +150,8 @@ public final class CodexBLEPeripheral: NSObject, CBPeripheralManagerDelegate, @u
             for: statusCharacteristic,
             onSubscribedCentrals: nil
         )
-        pendingActivityFrames = ActivityPacket.encode(latestActivity, sequence: activitySequence)
+        pendingActivityFrames = ActivityListPacket.encode(latestActivity, sequence: activitySequence)
+            + ActivityPacket.encode(latestActivity, sequence: activitySequence)
         drainActivityFrames()
     }
 

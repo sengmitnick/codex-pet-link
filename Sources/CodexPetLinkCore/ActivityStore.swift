@@ -114,10 +114,8 @@ public struct ActivityStore: Sendable {
             return $0.sessionID < $1.sessionID
         }
 
-        let additional = max(0, visible.count - 1)
         return TaskActivitySnapshot(
-            primary: visible.first?.presented(titlesEnabled: titlesEnabled),
-            additionalCount: UInt8(clamping: additional)
+            activities: visible.map { $0.presented(titlesEnabled: titlesEnabled) }
         )
     }
 }
