@@ -1,45 +1,44 @@
-# Codex Pet Link PoC
+# Codex Pet Link
 
-这个 macOS 命令行帮助程序把本机 Codex 任务状态广播为自定义 BLE GATT 通知，供赛博宠物连接。PoC 需要前台运行，不包含开机自启或正式 Codex 插件。
+Codex Pet Link 把 Mac 上的 Codex 任务活动通过 Bluetooth LE 发给 Rokid 眼镜中的赛博宠物。眼镜底栏显示的是具体任务和当前阶段，例如 `优化引导 · 正在修改文件`，而不只是“工作中”。
 
-## 1. 先跑假状态
+## 一句话安装
 
-```bash
-cd tools/codex-pet-link
-swift run codex-pet-link --source fake
-```
+把下面这句话发给 Codex：
 
-首次运行时允许终端使用蓝牙。帮助程序每 5 秒轮换：空闲、工作中、需处理、已完成、遇到问题。
+> 请安装并启动 https://github.com/sengmitnick/codex-pet-link，严格按照仓库 INSTALL.md 操作，完成后运行 `codex-pet-link doctor` 并告诉我检查结果。
 
-在眼镜中打开赛博宠物，打开一级菜单并选择“Codex：未连接”。连接成功后菜单标签会跟随状态变化。
+不需要桌面 App、云服务或 OpenAI API Key。安装后由 Codex 插件 Hooks 更新任务活动；重新启动电脑后，打开一个新的 Codex 任务会恢复 Helper。
 
-## 2. 再连接真实 Codex
+## 显示内容
 
-```bash
-cd tools/codex-pet-link
-swift run codex-pet-link --source codex
-```
+- 任务标题：优先使用 Codex App Server 的 `thread.name`，尚未生成时使用经过清洗和截断的用户意图。
+- 执行阶段：正在思考、正在运行命令、正在修改文件、正在搜索、等待确认、已完成或遇到问题。
+- 多任务：按需处理、异常、完成、运行的顺序选择一条，并显示额外数量 `+N`。
+- 在线状态：眼镜右上角只显示 `Codex 在线`；任务活动留在底栏。
 
-默认只读监听 `~/.codex/sessions`。也可以指定测试目录：
+不会通过 BLE 发送完整 prompt、代码、命令参数、工具输出或文件路径。若不希望发送短任务标题，可执行：
 
 ```bash
-swift run codex-pet-link --source codex --sessions /absolute/path/to/sessions
+codex-pet-link privacy titles-off
 ```
 
-BLE 包只包含状态码、序号和更新时间，不包含任务标题、对话正文、代码或路径。
+## 常用命令
 
-## 真机验收
+```bash
+codex-pet-link status --json
+codex-pet-link doctor
+codex-pet-link restart
+codex-pet-link privacy titles-on
+```
 
-1. fake 模式运行后，眼镜在 10 秒内发现并连接 `Codex Pet Link`。
-2. 五种状态的标签和动画依次出现，重复心跳不重复播放动画。
-3. 退出再打开宠物时，通过已保存设备 ID 自动重连。
-4. 停止帮助程序后，25 秒内显示“Codex：已断开”。
-5. real 模式下，新任务开始和完成在 3 秒内到达眼镜。
+开发和真机测试见 [INSTALL.md](INSTALL.md)，协议见 [docs/protocol.md](docs/protocol.md)。
 
-## 已知边界
+## 兼容性
 
-- 赛博宠物页面必须处于 AIUI 可交互状态才能扫描、连接和订阅通知。
-- 当前状态源是 Codex 本地 JSONL，属于 PoC 接口。
-- “需处理”只识别当前已知的输入/授权事件形状；真机测试需要特别确认。
-- 蓝牙超出范围后不会走互联网转发。
-- 关闭终端或电脑重启后需要重新运行帮助程序。
+- macOS 13+
+- 安装了 Codex CLI 和 Swift 6 工具链
+- Rokid 眼镜端 pet-pal 支持 v2 活动特征值
+- 旧眼镜端仍可读取原有 12 字节 v1 状态特征值
+
+蓝牙只覆盖本地距离；本项目不提供互联网中继。

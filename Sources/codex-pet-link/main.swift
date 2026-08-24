@@ -18,6 +18,7 @@ private final class RuntimeController: NSObject {
     private var lastConfigPoll = Date.distantPast
     private var titlesEnabled = true
     private var nextTitleAttempt: [String: Date] = [:]
+    private var lastLogSignature = ""
 
     init(mode: SourceMode, paths: ServicePaths, sessionsRoot: URL) {
         self.mode = mode
@@ -76,9 +77,13 @@ private final class RuntimeController: NSObject {
         let state = activity.primary?.state ?? fallbackState
         let status = sequencer.snapshot(state: state, at: now)
         peripheral.publish(status, activity: activity)
-        Self.writeLog(
-            "state=\(state) phase=\(activity.primary?.phase.rawValue ?? 0) titleLength=\(activity.primary?.title.count ?? 0) additional=\(activity.additionalCount)"
-        )
+        let logSignature = "\(state.rawValue)|\(activity.primary?.phase.rawValue ?? 0)|\(activity.primary?.title.count ?? 0)|\(activity.additionalCount)"
+        if logSignature != lastLogSignature {
+            lastLogSignature = logSignature
+            Self.writeLog(
+                "state=\(state) phase=\(activity.primary?.phase.rawValue ?? 0) titleLength=\(activity.primary?.title.count ?? 0) additional=\(activity.additionalCount)"
+            )
+        }
     }
 
     private func resolveOfficialTitleIfNeeded(for activity: TaskActivity, now: Date) {

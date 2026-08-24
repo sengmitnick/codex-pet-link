@@ -55,6 +55,7 @@ public struct HookInbox {
 
 public struct ActivityStore: Sendable {
     private var activities: [String: TaskActivity] = [:]
+    private var officialTitles: [String: String] = [:]
     public static let completedRetention: TimeInterval = 30 * 60
 
     public init() {}
@@ -63,9 +64,8 @@ public struct ActivityStore: Sendable {
         if let current = activities[event.sessionID], current.updatedAt > event.updatedAt {
             return
         }
-        let title = event.title?.isEmpty == false
-            ? event.title!
-            : activities[event.sessionID]?.title ?? ""
+        let title = officialTitles[event.sessionID]
+            ?? (event.title?.isEmpty == false ? event.title! : activities[event.sessionID]?.title ?? "")
         activities[event.sessionID] = TaskActivity(
             sessionID: event.sessionID,
             title: title,
@@ -79,6 +79,7 @@ public struct ActivityStore: Sendable {
         guard var activity = activities[sessionID] else { return }
         let sanitized = TaskTitle.sanitize(title)
         guard !sanitized.isEmpty else { return }
+        officialTitles[sessionID] = sanitized
         activity.title = sanitized
         activities[sessionID] = activity
     }

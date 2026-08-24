@@ -63,6 +63,19 @@ final class ActivityStoreTests: XCTestCase {
         XCTAssertEqual(store.snapshot(now: Date(timeIntervalSince1970: 100)).primary?.sessionID, "newer")
     }
 
+    func testOfficialTitleSurvivesLaterPromptsInSameThread() {
+        var store = ActivityStore()
+        store.apply(event(session: "s1", title: "第一个 prompt", state: .running, phase: .thinking, time: 1))
+        store.setTitle("赛博宠物：连接 Codex", for: "s1", at: Date(timeIntervalSince1970: 2))
+
+        store.apply(event(session: "s1", title: "继续改一下", state: .running, phase: .thinking, time: 3))
+
+        XCTAssertEqual(
+            store.snapshot(now: Date(timeIntervalSince1970: 4)).primary?.title,
+            "赛博宠物：连接 Codex"
+        )
+    }
+
     private func event(
         session: String,
         title: String?,

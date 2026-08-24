@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift tests
+        run: swift test
+      - name: Installer integration test
+        run: |
+          ./IntegrationTests/install.test.sh
+          ./IntegrationTests/hooks.test.sh
+      - name: Validate scripts and JSON
+        run: |
+          bash -n scripts/*.sh plugins/codex-pet-link/scripts/*.sh
+          python3 -m json.tool .agents/plugins/marketplace.json >/dev/null
+          python3 -m json.tool plugins/codex-pet-link/.codex-plugin/plugin.json >/dev/null
+          python3 -m json.tool plugins/codex-pet-link/hooks/hooks.json >/dev/null

@@ -45,7 +45,7 @@ public enum HookEvent {
         guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw HookEventError.malformedJSON
         }
-        guard let sessionID = string("session_id", "sessionId", "id", in: root), !sessionID.isEmpty else {
+        guard let sessionID = string("session_id", "sessionId", in: root), !sessionID.isEmpty else {
             throw HookEventError.missingSessionID
         }
 

@@ -1,0 +1,23 @@
+{
+  "name": "codex-pet-link",
+  "version": "0.2.0",
+  "description": "Broadcast Codex task titles and activity phases to a Rokid cyber pet over Bluetooth.",
+  "author": {
+    "name": "sengmitnick"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Pet Link",
+    "shortDescription": "Show Codex task activity on a Rokid pet",
+    "longDescription": "Runs a local macOS BLE helper and forwards privacy-filtered Codex lifecycle events so a Rokid cyber pet can show the current task title and phase.",
+    "developerName": "sengmitnick",
+    "category": "Productivity",
+    "capabilities": [
+      "Task title and phase forwarding",
+      "Automatic helper recovery on SessionStart",
+      "Local service diagnostics",
+      "Status-only privacy mode"
+    ],
+    "defaultPrompt": "Check Codex Pet Link and diagnose it if it is not running."
+  }
+}

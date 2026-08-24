@@ -33,6 +33,21 @@ final class AppServerTitleClientTests: XCTestCase {
 
         XCTAssertNil(try AppServerTitleClient(transport: transport).title(threadID: "s1"))
     }
+
+    func testLiveAppServerWhenExplicitlyEnabled() throws {
+        guard let threadID = ProcessInfo.processInfo.environment["CODEX_PET_LINK_TEST_THREAD_ID"],
+              !threadID.isEmpty
+        else {
+            throw XCTSkip("set CODEX_PET_LINK_TEST_THREAD_ID for the local smoke test")
+        }
+        let transport = AppServerProcessTransport()
+        defer { transport.shutdown() }
+
+        let title = try AppServerTitleClient(transport: transport, timeout: 5).title(threadID: threadID)
+
+        XCTAssertNotNil(title)
+        XCTAssertFalse(title?.isEmpty ?? true)
+    }
 }
 
 private final class RecordingAppServerTransport: AppServerRequesting, @unchecked Sendable {
