@@ -5,12 +5,16 @@ public final class CodexBLEPeripheral: NSObject, CBPeripheralManagerDelegate, @u
     private let queue = DispatchQueue(label: "codex.pet.link.ble")
     private lazy var manager = CBPeripheralManager(delegate: self, queue: queue)
     private var statusCharacteristic: CBMutableCharacteristic?
+    private var activityCharacteristic: CBMutableCharacteristic?
     private var latest = CodexStatusSnapshot(
         state: .idle,
         progress: nil,
         sequence: 0,
         updatedAt: Date()
     )
+    private var latestActivity = TaskActivitySnapshot(primary: nil)
+    private var activitySequence: UInt16 = 0
+    private var pendingActivityFrames: [Data] = []
     private var heartbeatTimer: DispatchSourceTimer?
 
     public override init() {
@@ -25,6 +29,17 @@ public final class CodexBLEPeripheral: NSObject, CBPeripheralManagerDelegate, @u
         }
     }
 
+    public func publish(_ snapshot: CodexStatusSnapshot, activity: TaskActivitySnapshot) {
+        queue.async {
+            self.latest = snapshot
+            if self.latestActivity != activity {
+                self.activitySequence &+= 1
+                self.latestActivity = activity
+            }
+            self.notifySubscribers()
+        }
+    }
+
     public func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
         guard peripheral.state == .poweredOn else {
             peripheral.stopAdvertising()
@@ -32,8 +47,14 @@ public final class CodexBLEPeripheral: NSObject, CBPeripheralManagerDelegate, @u
             return
         }
 
-        let characteristic = CBMutableCharacteristic(
+        let statusCharacteristic = CBMutableCharacteristic(
             type: CBUUID(string: BLEContract.statusUUID),
+            properties: [.read, .notify],
+            value: nil,
+            permissions: [.readable]
+        )
+        let activityCharacteristic = CBMutableCharacteristic(
+            type: CBUUID(string: BLEContract.activityUUID),
             properties: [.read, .notify],
             value: nil,
             permissions: [.readable]
@@ -42,8 +63,9 @@ public final class CodexBLEPeripheral: NSObject, CBPeripheralManagerDelegate, @u
             type: CBUUID(string: BLEContract.serviceUUID),
             primary: true
         )
-        service.characteristics = [characteristic]
-        statusCharacteristic = characteristic
+        service.characteristics = [statusCharacteristic, activityCharacteristic]
+        self.statusCharacteristic = statusCharacteristic
+        self.activityCharacteristic = activityCharacteristic
         peripheral.removeAllServices()
         peripheral.add(service)
     }
@@ -78,12 +100,17 @@ public final class CodexBLEPeripheral: NSObject, CBPeripheralManagerDelegate, @u
         _ peripheral: CBPeripheralManager,
         didReceiveRead request: CBATTRequest
     ) {
-        guard request.characteristic.uuid == CBUUID(string: BLEContract.statusUUID) else {
+        let packet: Data
+        if request.characteristic.uuid == CBUUID(string: BLEContract.statusUUID) {
+            packet = BLEPacket.encode(latest)
+        } else if request.characteristic.uuid == CBUUID(string: BLEContract.activityUUID),
+                  let first = ActivityPacket.encode(latestActivity, sequence: activitySequence).first
+        {
+            packet = first
+        } else {
             peripheral.respond(to: request, withResult: .attributeNotFound)
             return
         }
-
-        let packet = BLEPacket.encode(latest)
         guard request.offset <= packet.count else {
             peripheral.respond(to: request, withResult: .invalidOffset)
             return
@@ -93,7 +120,7 @@ public final class CodexBLEPeripheral: NSObject, CBPeripheralManagerDelegate, @u
     }
 
     public func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
-        notifySubscribers()
+        drainActivityFrames()
     }
 
     private func startHeartbeat() {
@@ -123,6 +150,26 @@ public final class CodexBLEPeripheral: NSObject, CBPeripheralManagerDelegate, @u
             for: statusCharacteristic,
             onSubscribedCentrals: nil
         )
+        pendingActivityFrames = ActivityPacket.encode(latestActivity, sequence: activitySequence)
+        drainActivityFrames()
+    }
+
+    private func drainActivityFrames() {
+        guard manager.state == .poweredOn,
+              let activityCharacteristic
+        else {
+            return
+        }
+        while let frame = pendingActivityFrames.first {
+            guard manager.updateValue(
+                frame,
+                for: activityCharacteristic,
+                onSubscribedCentrals: nil
+            ) else {
+                return
+            }
+            pendingActivityFrames.removeFirst()
+        }
     }
 
     private static func writeError(_ message: String) {

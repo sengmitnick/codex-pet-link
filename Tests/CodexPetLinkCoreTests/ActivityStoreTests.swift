@@ -53,6 +53,16 @@ final class ActivityStoreTests: XCTestCase {
         XCTAssertNil(store.snapshot(now: Date(timeIntervalSince1970: 1_802)).primary)
     }
 
+    func testOfficialTitleDoesNotMakeOlderTaskLookMoreRecent() {
+        var store = ActivityStore()
+        store.apply(event(session: "older", title: "旧标题", state: .running, phase: .thinking, time: 1))
+        store.apply(event(session: "newer", title: "新任务", state: .running, phase: .thinking, time: 2))
+
+        store.setTitle("Codex 标题", for: "older", at: Date(timeIntervalSince1970: 99))
+
+        XCTAssertEqual(store.snapshot(now: Date(timeIntervalSince1970: 100)).primary?.sessionID, "newer")
+    }
+
     private func event(
         session: String,
         title: String?,

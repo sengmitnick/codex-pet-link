@@ -75,12 +75,11 @@ public struct ActivityStore: Sendable {
         )
     }
 
-    public mutating func setTitle(_ title: String, for sessionID: String, at date: Date = Date()) {
+    public mutating func setTitle(_ title: String, for sessionID: String, at _: Date = Date()) {
         guard var activity = activities[sessionID] else { return }
         let sanitized = TaskTitle.sanitize(title)
         guard !sanitized.isEmpty else { return }
         activity.title = sanitized
-        activity.updatedAt = max(activity.updatedAt, date)
         activities[sessionID] = activity
     }
 

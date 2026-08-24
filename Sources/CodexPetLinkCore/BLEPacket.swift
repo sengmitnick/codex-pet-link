@@ -3,6 +3,7 @@ import Foundation
 public enum BLEContract {
     public static let serviceUUID = "7d6b0001-9d7e-4e8a-a7b7-5c2e8f4a1100"
     public static let statusUUID = "7d6b0002-9d7e-4e8a-a7b7-5c2e8f4a1100"
+    public static let activityUUID = "7d6b0003-9d7e-4e8a-a7b7-5c2e8f4a1100"
     public static let heartbeat: TimeInterval = 10
 }
 
