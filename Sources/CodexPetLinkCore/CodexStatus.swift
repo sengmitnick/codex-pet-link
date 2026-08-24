@@ -1,11 +1,23 @@
 import Foundation
 
-public enum CodexTaskState: UInt8, CaseIterable, Sendable {
+public enum CodexTaskState: UInt8, CaseIterable, Codable, Sendable {
     case idle = 0
     case running = 1
     case needsInput = 2
     case ready = 3
     case blocked = 4
+}
+
+public extension CodexTaskState {
+    var activityPriority: Int {
+        switch self {
+        case .needsInput: 4
+        case .blocked: 3
+        case .ready: 2
+        case .running: 1
+        case .idle: 0
+        }
+    }
 }
 
 public struct CodexStatusSnapshot: Equatable, Sendable {
