@@ -6,6 +6,7 @@ trap 'rm -rf "$TEST_ROOT"' EXIT
 TEST_HOME="$TEST_ROOT/home"
 TEST_BIN="$TEST_ROOT/bin"
 TEST_LOG="$TEST_ROOT/codex.log"
+TEST_HELPER_LOG="$TEST_ROOT/helper.log"
 mkdir -p "$TEST_HOME" "$TEST_BIN"
 
 cat >"$TEST_BIN/swift" <<'SCRIPT'
@@ -18,6 +19,7 @@ done
 mkdir -p "$PACKAGE_PATH/.build/release"
 cat >"$PACKAGE_PATH/.build/release/codex-pet-link" <<'HELPER'
 #!/bin/sh
+printf '%s\n' "$*" >>"${CODEX_PET_LINK_HELPER_LOG:?}"
 exit 0
 HELPER
 chmod +x "$PACKAGE_PATH/.build/release/codex-pet-link"
@@ -36,6 +38,7 @@ for attempt in 1 2; do
     CODEX_PET_LINK_SKIP_PLATFORM_CHECK=1 \
     CODEX_PET_LINK_SWIFT="$TEST_BIN/swift" \
     CODEX_PET_LINK_CODEX="$TEST_BIN/codex" \
+    CODEX_PET_LINK_HELPER_LOG="$TEST_HELPER_LOG" \
     sh scripts/install.sh
 done
 
@@ -44,4 +47,5 @@ test -L "$TEST_HOME/.local/bin/codex-pet-link"
 test ! -e "$TEST_HOME/Library/LaunchAgents/com.rokid.codex-pet-link.plist"
 grep -q 'plugin marketplace add' "$TEST_LOG"
 grep -q 'plugin add codex-pet-link@codex-pet-link' "$TEST_LOG"
+test "$(grep -c '^restart$' "$TEST_HELPER_LOG")" -eq 2
 echo "install test passed"

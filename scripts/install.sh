@@ -31,7 +31,7 @@ ln -sfn "$INSTALLED_BIN" "$COMMAND_LINK"
 "$CODEX_BIN" plugin remove codex-pet-link@codex-pet-link >/dev/null 2>&1 || true
 "$CODEX_BIN" plugin add codex-pet-link@codex-pet-link >/dev/null
 
-"$INSTALLED_BIN" ensure
+"$INSTALLED_BIN" restart
 "$INSTALLED_BIN" doctor
 
 echo "Codex Pet Link installed. Start a new Codex task so the plugin hooks are loaded."
