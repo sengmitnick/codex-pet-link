@@ -7,6 +7,7 @@ TEST_HOME="$TEST_ROOT/home"
 TEST_BIN="$TEST_ROOT/bin"
 TEST_LOG="$TEST_ROOT/codex.log"
 TEST_HELPER_LOG="$TEST_ROOT/helper.log"
+TEST_OUTPUT="$TEST_ROOT/install.out"
 mkdir -p "$TEST_HOME" "$TEST_BIN"
 
 cat >"$TEST_BIN/swift" <<'SCRIPT'
@@ -39,7 +40,7 @@ for attempt in 1 2; do
     CODEX_PET_LINK_SWIFT="$TEST_BIN/swift" \
     CODEX_PET_LINK_CODEX="$TEST_BIN/codex" \
     CODEX_PET_LINK_HELPER_LOG="$TEST_HELPER_LOG" \
-    sh scripts/install.sh
+    sh scripts/install.sh >>"$TEST_OUTPUT"
 done
 
 test -x "$TEST_HOME/Library/Application Support/CodexPetLink/bin/codex-pet-link"
@@ -48,4 +49,5 @@ test ! -e "$TEST_HOME/Library/LaunchAgents/com.rokid.codex-pet-link.plist"
 grep -q 'plugin marketplace add' "$TEST_LOG"
 grep -q 'plugin add codex-pet-link@codex-pet-link' "$TEST_LOG"
 test "$(grep -c '^restart$' "$TEST_HELPER_LOG")" -eq 2
+grep -q 'review the plugin Hooks and click Trust all' "$TEST_OUTPUT"
 echo "install test passed"

@@ -34,4 +34,4 @@ ln -sfn "$INSTALLED_BIN" "$COMMAND_LINK"
 "$INSTALLED_BIN" restart
 "$INSTALLED_BIN" doctor
 
-echo "Codex Pet Link installed. Start a new Codex task so the plugin hooks are loaded."
+echo "Codex Pet Link installed. In Codex, review the plugin Hooks and click Trust all, then start a new task."

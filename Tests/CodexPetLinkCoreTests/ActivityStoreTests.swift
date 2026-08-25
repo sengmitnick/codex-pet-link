@@ -3,6 +3,46 @@ import XCTest
 @testable import CodexPetLinkCore
 
 final class ActivityStoreTests: XCTestCase {
+    func testFallbackShowsActionWhenHookActivityIsMissing() {
+        let snapshot = HookFallbackActivity.apply(
+            to: TaskActivitySnapshot(activities: []),
+            fallbackState: .running,
+            at: Date(timeIntervalSince1970: 10)
+        )
+
+        XCTAssertEqual(snapshot.primary?.title, "请信任 Hooks 并新建任务")
+        XCTAssertEqual(snapshot.primary?.state, .needsInput)
+        XCTAssertEqual(snapshot.primary?.phase, .waitingApproval)
+    }
+
+    func testFallbackDoesNotReplaceRealHookActivity() {
+        let activity = TaskActivity(
+            sessionID: "real-session",
+            title: "优化引导",
+            state: .running,
+            phase: .modifyingFiles,
+            updatedAt: Date(timeIntervalSince1970: 10)
+        )
+
+        let snapshot = HookFallbackActivity.apply(
+            to: TaskActivitySnapshot(activities: [activity]),
+            fallbackState: .running,
+            at: Date(timeIntervalSince1970: 11)
+        )
+
+        XCTAssertEqual(snapshot.activities, [activity])
+    }
+
+    func testFallbackDoesNotPromptWhileCodexIsIdle() {
+        let snapshot = HookFallbackActivity.apply(
+            to: TaskActivitySnapshot(activities: []),
+            fallbackState: .idle,
+            at: Date(timeIntervalSince1970: 10)
+        )
+
+        XCTAssertTrue(snapshot.activities.isEmpty)
+    }
+
     func testConsumesConcurrentEventsAndPrioritizesNeedsInput() throws {
         let root = temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: root) }

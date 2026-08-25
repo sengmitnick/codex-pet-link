@@ -76,6 +76,11 @@ private final class RuntimeController: NSObject {
         if !activity.activities.isEmpty {
             activity = store.snapshot(now: now, titlesEnabled: titlesEnabled)
         }
+        activity = HookFallbackActivity.apply(
+            to: activity,
+            fallbackState: fallbackState,
+            at: now
+        )
         let state = activity.primary?.state ?? fallbackState
         let status = sequencer.snapshot(state: state, at: now)
         peripheral.publish(status, activity: activity)

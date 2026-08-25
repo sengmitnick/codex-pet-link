@@ -12,7 +12,7 @@ Codex Pet Link 把 Mac 上的 Codex 任务活动通过 Bluetooth LE 发给 Rokid
 
 不需要桌面 App、云服务或 OpenAI API Key。首次安装或 Hooks 发生变更后，需要在 Codex 的插件“钩子”页面检查并点击“全部信任”，再打开一个新任务。信任会按 Hook 内容保存，普通重启电脑不需要重新确认。
 
-未信任 Hooks 时，如果 Helper 已在运行，它会继续读取 Codex 本地会话作为降级数据源，但只能提供运行中、等待输入、已完成和异常等粗状态，没有任务标题、工具阶段和多任务活动。电脑重启后，未信任的 `SessionStart` Hook 无法自动恢复 Helper，可先手动运行 `codex-pet-link ensure`。
+未信任 Hooks 时，如果 Helper 已在运行，它会通过 Codex 本地会话识别已进入降级状态，并在眼镜任务区显示 `请信任 Hooks 并新建任务 · 等待确认`，不再只显示无法解释原因的粗状态。真实 Hook 活动到达后，该提示会自动消失。电脑重启后，未信任的 `SessionStart` Hook 无法自动恢复 Helper，可先手动运行 `codex-pet-link ensure`。
 
 ## 显示内容
 

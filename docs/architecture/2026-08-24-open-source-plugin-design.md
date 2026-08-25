@@ -73,7 +73,7 @@ Helper 可以同时维护多条活动，但眼镜底栏只展示一条。选择�
 
 插件 Hook 首次运行需要用户在 Codex 中审查并信任。信任按 Hook 内容保存：普通重启不再询问，Hook 发生变更时需重新审查。Helper 首次访问蓝牙时，macOS 可能要求为 Codex/ChatGPT 授予蓝牙权限；安装文档明确解释该步骤。
 
-未信任 Hooks 时使用分级降级策略：如果安装脚本已启动 Helper，Helper 继续轮询 Codex JSONL 会话，可广播运行、需要输入、完成和异常等粗状态；因为没有 Hook 活动，不提供任务标题、工具阶段和多任务列表。重启电脑后若 Hooks 仍未信任，`SessionStart` 不会恢复 Helper，用户需手动执行 `codex-pet-link ensure`。
+未信任 Hooks 时使用可操作降级策略：如果安装脚本已启动 Helper，Helper 继续轮询 Codex JSONL 会话以判断 Codex 是否已有任务状态。当 JSONL 非空闲但 Hook 活动列表为空时，Helper 合成一条高优先级的 `请信任 Hooks 并新建任务 · 等待确认` 活动；真实 Hook 活动到达后自动替换它，完全空闲时不误提示。重启电脑后若 Hooks 仍未信任，`SessionStart` 不会恢复 Helper，用户需手动执行 `codex-pet-link ensure`。
 
 ## 命令接口
 

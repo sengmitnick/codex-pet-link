@@ -12,7 +12,7 @@ Clone https://github.com/sengmitnick/codex-pet-link, read INSTALL.md, run ./scri
 
 首次广播时，macOS 可能要求 Codex/ChatGPT 使用蓝牙，请允许。插件安装或更新后，进入插件的“钩子”页面，检查后点击“全部信任”，然后新建一个 Codex 任务，使 Hooks 在新任务中加载。Hook 未变更时，重启电脑不需要重新信任。
 
-如果尚未信任 Hooks，已在运行的 Helper 会从 Codex 本地会话读取粗状态作为降级处理，但不会有任务标题、工具阶段和多任务活动。重启电脑后，未信任的 `SessionStart` Hook 不会运行；信任前可手动执行 `codex-pet-link ensure` 启动 Helper。
+如果尚未信任 Hooks，已在运行的 Helper 会从 Codex 本地会话识别降级状态，并在眼镜任务区显示 `请信任 Hooks 并新建任务 · 等待确认`。真实 Hook 活动到达后，该提示自动消失。重启电脑后，未信任的 `SessionStart` Hook 不会运行；信任前可手动执行 `codex-pet-link ensure` 启动 Helper。
 
 ## 手动执行
 
