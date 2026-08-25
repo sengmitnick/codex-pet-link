@@ -6,9 +6,13 @@ Codex Pet Link 把 Mac 上的 Codex 任务活动通过 Bluetooth LE 发给 Rokid
 
 把下面这句话发给 Codex：
 
-> 请安装并启动 https://github.com/sengmitnick/codex-pet-link，严格按照仓库 INSTALL.md 操作，完成后运行 `codex-pet-link doctor` 并告诉我检查结果。
+```text
+请安装并启动 https://github.com/sengmitnick/codex-pet-link，严格按照仓库 INSTALL.md 操作。完成后运行 codex-pet-link doctor，告诉我检查结果，并提醒我在插件的“钩子”页面检查后点击“全部信任”。
+```
 
-不需要桌面 App、云服务或 OpenAI API Key。安装后由 Codex 插件 Hooks 更新任务活动；重新启动电脑后，打开一个新的 Codex 任务会恢复 Helper。
+不需要桌面 App、云服务或 OpenAI API Key。首次安装或 Hooks 发生变更后，需要在 Codex 的插件“钩子”页面检查并点击“全部信任”，再打开一个新任务。信任会按 Hook 内容保存，普通重启电脑不需要重新确认。
+
+未信任 Hooks 时，如果 Helper 已在运行，它会继续读取 Codex 本地会话作为降级数据源，但只能提供运行中、等待输入、已完成和异常等粗状态，没有任务标题、工具阶段和多任务活动。电脑重启后，未信任的 `SessionStart` Hook 无法自动恢复 Helper，可先手动运行 `codex-pet-link ensure`。
 
 ## 显示内容
 

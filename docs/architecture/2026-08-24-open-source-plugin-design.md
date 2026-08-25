@@ -9,7 +9,9 @@
 
 推荐给其他用户的指令为：
 
-> 请安装并启动 https://github.com/sengmitnick/codex-pet-link，严格按照仓库 INSTALL.md 操作，完成后运行 `codex-pet-link doctor` 并告诉我检查结果。
+```text
+请安装并启动 https://github.com/sengmitnick/codex-pet-link，严格按照仓库 INSTALL.md 操作。完成后运行 codex-pet-link doctor，告诉我检查结果，并提醒我在插件的“钩子”页面检查后点击“全部信任”。
+```
 
 ## 产品边界
 
@@ -69,7 +71,9 @@ Helper 可以同时维护多条活动，但眼镜底栏只展示一条。选择�
 6. 执行 `codex-pet-link ensure` 立即启动 BLE Helper。
 7. 执行 `codex-pet-link doctor` 输出最终结果。
 
-插件 Hook 首次运行需要用户在 Codex 中审查并信任。Helper 首次访问蓝牙时，macOS 可能要求为 Codex/ChatGPT 授予蓝牙权限；安装文档明确解释该步骤。
+插件 Hook 首次运行需要用户在 Codex 中审查并信任。信任按 Hook 内容保存：普通重启不再询问，Hook 发生变更时需重新审查。Helper 首次访问蓝牙时，macOS 可能要求为 Codex/ChatGPT 授予蓝牙权限；安装文档明确解释该步骤。
+
+未信任 Hooks 时使用分级降级策略：如果安装脚本已启动 Helper，Helper 继续轮询 Codex JSONL 会话，可广播运行、需要输入、完成和异常等粗状态；因为没有 Hook 活动，不提供任务标题、工具阶段和多任务列表。重启电脑后若 Hooks 仍未信任，`SessionStart` 不会恢复 Helper，用户需手动执行 `codex-pet-link ensure`。
 
 ## 命令接口
 
