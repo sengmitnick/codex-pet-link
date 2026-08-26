@@ -34,8 +34,8 @@ final class TaskActivityTests: XCTestCase {
 
     func testPriorityMatchesCodexPetSemantics() {
         XCTAssertGreaterThan(CodexTaskState.needsInput.activityPriority, CodexTaskState.blocked.activityPriority)
-        XCTAssertGreaterThan(CodexTaskState.blocked.activityPriority, CodexTaskState.ready.activityPriority)
-        XCTAssertGreaterThan(CodexTaskState.ready.activityPriority, CodexTaskState.running.activityPriority)
+        XCTAssertGreaterThan(CodexTaskState.blocked.activityPriority, CodexTaskState.running.activityPriority)
+        XCTAssertGreaterThan(CodexTaskState.running.activityPriority, CodexTaskState.ready.activityPriority)
         XCTAssertGreaterThan(CodexTaskState.running.activityPriority, CodexTaskState.idle.activityPriority)
     }
 }

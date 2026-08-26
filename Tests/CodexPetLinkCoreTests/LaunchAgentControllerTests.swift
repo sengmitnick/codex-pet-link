@@ -22,6 +22,10 @@ final class LaunchAgentControllerTests: XCTestCase {
         XCTAssertEqual(value["ProgramArguments"] as? [String], [paths.executable.path, "run"])
         XCTAssertEqual(value["RunAtLoad"] as? Bool, false)
         XCTAssertEqual(value["KeepAlive"] as? Bool, true)
+        let environment = value["EnvironmentVariables"] as? [String: String]
+        let path = environment?["PATH"] ?? ""
+        XCTAssertTrue(path.contains("/Applications/ChatGPT.app/Contents/Resources"))
+        XCTAssertTrue(path.contains("/usr/bin"))
     }
 
     func testEnsureIsIdempotentAndBootstrapsOnlyWhenMissing() throws {

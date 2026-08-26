@@ -13,8 +13,8 @@ public extension CodexTaskState {
         switch self {
         case .needsInput: 4
         case .blocked: 3
-        case .ready: 2
-        case .running: 1
+        case .running: 2
+        case .ready: 1
         case .idle: 0
         }
     }

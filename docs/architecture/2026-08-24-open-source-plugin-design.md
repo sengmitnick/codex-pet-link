@@ -43,7 +43,7 @@ Helper 仍由 `launchd` 托管，以解决多个 Codex 会话并发启动、进�
 
 任务状态保持 `running / needs_input / ready / blocked`。执行阶段用于告诉用户 Codex 具体在做什么，例如“正在思考”“正在运行命令”“正在修改文件”“正在搜索”“等待确认”“已完成”。阶段来自 Hook 的工具事件，不把命令、参数、文件名或工具输出传给眼镜。
 
-Helper 可以同时维护多条活动，但眼镜底栏只展示一条。选择顺序为：需处理、遇到问题、已完成、工作中；同级选择最近更新者。还有其他活动时追加简短数量提示，例如 `+1`。
+Helper 可以同时维护多条活动，但眼镜底栏只展示一条。选择顺序为：需处理、遇到问题、工作中、已完成；同级选择最近更新者。进行中的任务必须排在近期完成记录之前，避免多任务执行时底栏误报“已完成”。还有其他活动时追加简短数量提示，例如 `+1`。
 
 ## 眼镜呈现
 
@@ -68,8 +68,9 @@ Helper 可以同时维护多条活动，但眼镜底栏只展示一条。选择�
 3. 安装到 `~/Library/Application Support/CodexPetLink/bin/codex-pet-link`。
 4. 在 `~/.local/bin/codex-pet-link` 创建命令入口。
 5. 添加 GitHub 仓库 marketplace，安装 `codex-pet-link` 插件。
-6. 执行 `codex-pet-link ensure` 立即启动 BLE Helper。
-7. 执行 `codex-pet-link doctor` 输出最终结果。
+6. 为 LaunchAgent 显式写入 Codex Desktop、Homebrew 和系统命令目录的 `PATH`，不能依赖登录 Shell 环境。
+7. 执行 `codex-pet-link ensure` 立即启动 BLE Helper。
+8. 执行 `codex-pet-link doctor` 输出最终结果。
 
 插件 Hook 首次运行需要用户在 Codex 中审查并信任。信任按 Hook 内容保存：普通重启不再询问，Hook 发生变更时需重新审查。Helper 首次访问蓝牙时，macOS 可能要求为 Codex/ChatGPT 授予蓝牙权限；安装文档明确解释该步骤。
 
@@ -125,6 +126,6 @@ Hook 不直接连接 BLE 进程。`codex-pet-link hook` 将归一化后的单个
 7. 新任务开始后，眼镜底栏在 3 秒内显示短任务名和当前阶段，不再只显示“工作中”。
 8. 工具执行只改变阶段，不把命令、参数、代码或路径发送到 BLE。
 9. App Server 有 `thread.name` 时优先显示该标题；无标题时显示经过清洗和截断的 prompt 摘要。
-10. 多任务时按需处理、异常、完成、运行排序，逐条显示任务标题和最近活动，不折叠为几个笼统状态。
+10. 多任务时按需处理、异常、运行、完成排序，逐条显示任务标题和最近活动，不折叠为几个笼统状态。
 11. 关闭标题传输后，BLE 回退为纯状态文案。
 12. 旧状态特征值与眼镜端现有实现保持兼容。

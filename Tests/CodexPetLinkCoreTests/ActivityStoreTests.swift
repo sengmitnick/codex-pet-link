@@ -70,7 +70,7 @@ final class ActivityStoreTests: XCTestCase {
 
         let snapshot = store.snapshot(now: Date(timeIntervalSince1970: 50))
 
-        XCTAssertEqual(snapshot.activities.map(\.sessionID), ["input", "blocked", "ready", "running"])
+        XCTAssertEqual(snapshot.activities.map(\.sessionID), ["input", "blocked", "running", "ready"])
         XCTAssertEqual(snapshot.additionalCount, 3)
     }
 

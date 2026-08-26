@@ -51,9 +51,20 @@ public struct LaunchAgentController: Sendable {
     }
 
     public static func plistData(paths: ServicePaths) throws -> Data {
+        let executablePath = [
+            "/Applications/ChatGPT.app/Contents/Resources",
+            paths.homeDirectory.appendingPathComponent("Applications/ChatGPT.app/Contents/Resources").path,
+            "/opt/homebrew/bin",
+            "/usr/local/bin",
+            "/usr/bin",
+            "/bin",
+            "/usr/sbin",
+            "/sbin",
+        ].joined(separator: ":")
         let value: [String: Any] = [
             "Label": label,
             "ProgramArguments": [paths.executable.path, "run"],
+            "EnvironmentVariables": ["PATH": executablePath],
             "RunAtLoad": false,
             "KeepAlive": true,
             "StandardOutPath": paths.stdoutLog.path,
