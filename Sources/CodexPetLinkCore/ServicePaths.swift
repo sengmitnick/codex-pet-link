@@ -16,6 +16,7 @@ public struct ServicePaths: Sendable {
     public var plist: URL { dataDirectory.appendingPathComponent("com.rokid.codex-pet-link.plist") }
     public var inbox: URL { dataDirectory.appendingPathComponent("inbox", isDirectory: true) }
     public var config: URL { dataDirectory.appendingPathComponent("config.json") }
+    public var deviceIdentity: URL { dataDirectory.appendingPathComponent("device-identity.json") }
     public var stdoutLog: URL { dataDirectory.appendingPathComponent("codex-pet-link.log") }
     public var stderrLog: URL { dataDirectory.appendingPathComponent("codex-pet-link.error.log") }
     public var sessions: URL {

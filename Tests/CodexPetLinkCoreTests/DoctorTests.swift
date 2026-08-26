@@ -5,11 +5,18 @@ import XCTest
 final class DoctorTests: XCTestCase {
     func testReportsMissingInstallSessionsAndServiceSeparately() {
         let home = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        let report = Doctor(paths: ServicePaths(homeDirectory: home), serviceLoaded: { false }).inspect()
+        let paths = ServicePaths(homeDirectory: home)
+        _ = try? DeviceIdentity.loadOrCreate(
+            at: paths.deviceIdentity,
+            computerName: "测试电脑",
+            randomSuffix: { "A1B2" }
+        )
+        let report = Doctor(paths: paths, serviceLoaded: { false }).inspect()
 
         XCTAssertFalse(report.executableInstalled)
         XCTAssertFalse(report.sessionsAvailable)
         XCTAssertFalse(report.serviceLoaded)
+        XCTAssertEqual(report.advertisedName, "Codex Mac A1B2")
         XCTAssertEqual(report.overall, .needsAttention)
     }
 

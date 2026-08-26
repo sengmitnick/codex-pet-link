@@ -10,6 +10,7 @@ public struct DoctorReport: Codable, Equatable, Sendable {
     public var sessionsAvailable: Bool
     public var serviceLoaded: Bool
     public var dataDirectory: String
+    public var advertisedName: String
 
     public var overall: DoctorOverall {
         executableInstalled && sessionsAvailable && serviceLoaded ? .healthy : .needsAttention
@@ -27,12 +28,14 @@ public struct Doctor: Sendable {
 
     public func inspect() -> DoctorReport {
         let manager = FileManager.default
+        let identity = try? DeviceIdentity.loadOrCreate(at: paths.deviceIdentity)
         return DoctorReport(
             executableInstalled: manager.isExecutableFile(atPath: paths.executable.path)
                 || manager.fileExists(atPath: paths.executable.path),
             sessionsAvailable: manager.fileExists(atPath: paths.sessions.path),
             serviceLoaded: serviceLoaded(),
-            dataDirectory: paths.dataDirectory.path
+            dataDirectory: paths.dataDirectory.path,
+            advertisedName: identity?.advertisedName ?? "Codex Mac 0000"
         )
     }
 }

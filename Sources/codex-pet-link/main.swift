@@ -7,7 +7,7 @@ private final class RuntimeController: NSObject {
     private let paths: ServicePaths
     private let watcher: CodexSessionWatcher
     private let inbox: HookInbox
-    private let peripheral = CodexBLEPeripheral()
+    private let peripheral: CodexBLEPeripheral
     private let titleTransport = AppServerProcessTransport()
     private var store = ActivityStore()
     private var sequencer = StatusSequencer()
@@ -20,11 +20,13 @@ private final class RuntimeController: NSObject {
     private var nextTitleAttempt: [String: Date] = [:]
     private var lastLogSignature = ""
 
-    init(mode: SourceMode, paths: ServicePaths, sessionsRoot: URL) {
+    init(mode: SourceMode, paths: ServicePaths, sessionsRoot: URL) throws {
         self.mode = mode
         self.paths = paths
         watcher = CodexSessionWatcher(rootURL: sessionsRoot)
         inbox = HookInbox(root: paths.inbox)
+        let identity = try DeviceIdentity.loadOrCreate(at: paths.deviceIdentity)
+        peripheral = CodexBLEPeripheral(advertisedName: identity.advertisedName)
     }
 
     func start() {
@@ -171,7 +173,7 @@ private func run(_ command: CLICommand) throws {
     switch command {
     case let .run(source, sessions):
         let sessionsRoot = sessions.map(URL.init(fileURLWithPath:)) ?? paths.sessions
-        let controller = RuntimeController(mode: source, paths: paths, sessionsRoot: sessionsRoot)
+        let controller = try RuntimeController(mode: source, paths: paths, sessionsRoot: sessionsRoot)
         print("codex-pet-link: source=\(source.rawValue) sessions=\(sessionsRoot.path)")
         controller.start()
         RunLoop.main.run()
@@ -202,6 +204,7 @@ private func run(_ command: CLICommand) throws {
             print("executable: \(report.executableInstalled)")
             print("sessions: \(report.sessionsAvailable)")
             print("service: \(report.serviceLoaded)")
+            print("bluetooth: \(report.advertisedName)")
         }
     case let .hook(kind):
         let input = FileHandle.standardInput.readDataToEndOfFile()

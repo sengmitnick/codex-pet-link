@@ -3,6 +3,7 @@ import Foundation
 
 public final class CodexBLEPeripheral: NSObject, CBPeripheralManagerDelegate, @unchecked Sendable {
     private let queue = DispatchQueue(label: "codex.pet.link.ble")
+    private let advertisedName: String
     private lazy var manager = CBPeripheralManager(delegate: self, queue: queue)
     private var statusCharacteristic: CBMutableCharacteristic?
     private var activityCharacteristic: CBMutableCharacteristic?
@@ -17,7 +18,8 @@ public final class CodexBLEPeripheral: NSObject, CBPeripheralManagerDelegate, @u
     private var pendingActivityFrames: [Data] = []
     private var heartbeatTimer: DispatchSourceTimer?
 
-    public override init() {
+    public init(advertisedName: String) {
+        self.advertisedName = advertisedName
         super.init()
         _ = manager
     }
@@ -81,7 +83,7 @@ public final class CodexBLEPeripheral: NSObject, CBPeripheralManagerDelegate, @u
         }
 
         peripheral.startAdvertising([
-            CBAdvertisementDataLocalNameKey: "Codex Pet Link",
+            CBAdvertisementDataLocalNameKey: advertisedName,
             CBAdvertisementDataServiceUUIDsKey: [CBUUID(string: BLEContract.serviceUUID)],
         ])
         startHeartbeat()
