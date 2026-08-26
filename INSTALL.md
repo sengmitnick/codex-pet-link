@@ -12,6 +12,8 @@ Clone https://github.com/sengmitnick/codex-pet-link, read INSTALL.md, run ./scri
 
 首次广播时，macOS 可能要求 Codex/ChatGPT 使用蓝牙，请允许。插件安装或更新后，进入插件的“钩子”页面，检查后点击“全部信任”，然后新建一个 Codex 任务，使 Hooks 在新任务中加载。Hook 未变更时，重启电脑不需要重新信任。
 
+安装完成后，`codex-pet-link doctor --json` 的 `advertisedName` 是眼镜设备菜单看到的电脑名称。这个名称会持久保存，通常不会因电脑改名或 Helper 重启而变化；它会向附近蓝牙设备暴露缩短后的电脑标签，仅供辨认，不代表认证。
+
 如果尚未信任 Hooks，已在运行的 Helper 会从 Codex 本地会话识别降级状态，并在眼镜任务区显示 `请信任 Hooks 并新建任务 · 等待确认`。真实 Hook 活动到达后，该提示自动消失。重启电脑后，未信任的 `SessionStart` Hook 不会运行；信任前可手动执行 `codex-pet-link ensure` 启动 Helper。
 
 ## 手动执行
@@ -40,6 +42,8 @@ tail -n 100 "$HOME/Library/Application Support/CodexPetLink/codex-pet-link.error
 ```
 
 如果眼镜只显示抽象状态，通常是眼镜端仍为 v1；更新 pet-pal 后重新连接。若 Mac 重启后未广播，新建一个 Codex 任务，`SessionStart` 会执行幂等恢复。
+
+眼镜端默认不自动连接。点击“设备管理 → Codex：未连接”开始搜索；若现场有多台电脑运行 Helper，选择 `doctor` 中名称对应的一台。搜索中再次点击可取消，连接后再次点击可断开。
 
 ## 卸载
 
