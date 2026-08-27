@@ -60,6 +60,10 @@ public struct ActivityStore: Sendable {
 
     public init() {}
 
+    public var sessionIDs: Set<String> {
+        Set(activities.keys)
+    }
+
     public mutating func apply(_ event: NormalizedHookEvent) {
         if let current = activities[event.sessionID], current.updatedAt > event.updatedAt {
             return
@@ -82,6 +86,43 @@ public struct ActivityStore: Sendable {
         officialTitles[sessionID] = sanitized
         activity.title = sanitized
         activities[sessionID] = activity
+    }
+
+    public mutating func reconcileSessionStates(
+        _ states: [String: CodexTaskState],
+        at date: Date = Date()
+    ) {
+        for (sessionID, state) in states {
+            guard state != .idle,
+                  var activity = activities[sessionID],
+                  activity.state != state
+            else {
+                continue
+            }
+            activity.state = state
+            activity.phase = Self.phase(for: state)
+            activity.updatedAt = date
+            activities[sessionID] = activity
+        }
+    }
+
+    public mutating func mergeSessionActivities(_ snapshots: [CodexSessionActivity]) {
+        for snapshot in snapshots {
+            if activities[snapshot.sessionID] == nil {
+                activities[snapshot.sessionID] = TaskActivity(
+                    sessionID: snapshot.sessionID,
+                    title: "",
+                    state: snapshot.state,
+                    phase: Self.phase(for: snapshot.state),
+                    updatedAt: snapshot.updatedAt
+                )
+            } else {
+                reconcileSessionStates(
+                    [snapshot.sessionID: snapshot.state],
+                    at: snapshot.updatedAt
+                )
+            }
+        }
     }
 
     public mutating func consume(inbox: HookInbox) throws {
@@ -117,5 +158,15 @@ public struct ActivityStore: Sendable {
         return TaskActivitySnapshot(
             activities: visible.map { $0.presented(titlesEnabled: titlesEnabled) }
         )
+    }
+
+    private static func phase(for state: CodexTaskState) -> TaskPhase {
+        switch state {
+        case .idle: .idle
+        case .running: .thinking
+        case .needsInput: .waitingApproval
+        case .ready: .completed
+        case .blocked: .problem
+        }
     }
 }

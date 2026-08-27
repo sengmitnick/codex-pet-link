@@ -31,6 +31,7 @@ public enum EnsureResult: String, Equatable, Sendable {
 public enum LaunchAgentError: Error, Equatable {
     case bootstrapFailed(Int32)
     case bootoutFailed(Int32)
+    case restartTimedOut
 }
 
 public struct LaunchAgentController: Sendable {
@@ -98,6 +99,21 @@ public struct LaunchAgentController: Sendable {
         let status = runner.run(["bootout", serviceTarget])
         guard status == 0 else { throw LaunchAgentError.bootoutFailed(status) }
         return true
+    }
+
+    public func restart(
+        maxWaitAttempts: Int = 40,
+        waitInterval: TimeInterval = 0.05
+    ) throws -> EnsureResult {
+        _ = try stop()
+        for _ in 0..<max(0, maxWaitAttempts) {
+            if !isLoaded() { return try ensure() }
+            if waitInterval > 0 {
+                Thread.sleep(forTimeInterval: waitInterval)
+            }
+        }
+        guard !isLoaded() else { throw LaunchAgentError.restartTimedOut }
+        return try ensure()
     }
 
     private var domainTarget: String { "gui/\(uid)" }

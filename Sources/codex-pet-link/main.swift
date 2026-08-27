@@ -17,7 +17,7 @@ private final class RuntimeController: NSObject {
     private var lastWatcherPoll = Date.distantPast
     private var lastConfigPoll = Date.distantPast
     private var titlesEnabled = true
-    private var nextTitleAttempt: [String: Date] = [:]
+    private var titleResolutionScheduler = TitleResolutionScheduler()
     private var lastLogSignature = ""
 
     init(mode: SourceMode, paths: ServicePaths, sessionsRoot: URL) throws {
@@ -63,6 +63,13 @@ private final class RuntimeController: NSObject {
         }
         if now.timeIntervalSince(lastWatcherPoll) >= 1 {
             do {
+                let recentActivities = try watcher.pollRecentActivities(
+                    since: now.addingTimeInterval(-ActivityStore.completedRetention),
+                    limit: 12
+                )
+                store.mergeSessionActivities(recentActivities)
+                let sessionStates = try watcher.pollStates(for: store.sessionIDs)
+                store.reconcileSessionStates(sessionStates, at: now)
                 fallbackState = try watcher.pollOnce().state
             } catch {
                 fallbackState = .blocked
@@ -72,12 +79,6 @@ private final class RuntimeController: NSObject {
         }
 
         var activity = store.snapshot(now: now, titlesEnabled: titlesEnabled)
-        for visibleActivity in activity.activities {
-            resolveOfficialTitleIfNeeded(for: visibleActivity, now: now)
-        }
-        if !activity.activities.isEmpty {
-            activity = store.snapshot(now: now, titlesEnabled: titlesEnabled)
-        }
         activity = HookFallbackActivity.apply(
             to: activity,
             fallbackState: fallbackState,
@@ -91,24 +92,27 @@ private final class RuntimeController: NSObject {
             .joined(separator: "|")
         if logSignature != lastLogSignature {
             lastLogSignature = logSignature
+            let runningCount = activity.activities.filter { $0.state == .running }.count
+            let readyCount = activity.activities.filter { $0.state == .ready }.count
             Self.writeLog(
-                "state=\(state) activities=\(activity.activities.count) phase=\(activity.primary?.phase.rawValue ?? 0) titleLength=\(activity.primary?.title.count ?? 0)"
+                "state=\(state) activities=\(activity.activities.count) running=\(runningCount) ready=\(readyCount) phase=\(activity.primary?.phase.rawValue ?? 0) titleLength=\(activity.primary?.title.count ?? 0)"
             )
         }
+        resolveNextOfficialTitleIfNeeded(in: activity, now: now)
     }
 
-    private func resolveOfficialTitleIfNeeded(for activity: TaskActivity, now: Date) {
+    private func resolveNextOfficialTitleIfNeeded(in snapshot: TaskActivitySnapshot, now: Date) {
         guard titlesEnabled,
-              now >= nextTitleAttempt[activity.sessionID, default: .distantPast]
+              let activity = titleResolutionScheduler.nextActivity(in: snapshot.activities, at: now),
+              activity.sessionID != "codex-pet-link-hook-fallback"
         else {
             return
         }
-        nextTitleAttempt[activity.sessionID] = now.addingTimeInterval(30)
         do {
             let client = AppServerTitleClient(transport: titleTransport)
             if let title = try client.title(threadID: activity.sessionID) {
                 store.setTitle(title, for: activity.sessionID)
-                nextTitleAttempt[activity.sessionID] = .distantFuture
+                titleResolutionScheduler.markResolved(sessionID: activity.sessionID)
             }
         } catch {
             Self.writeError("thread title unavailable for session=\(activity.sessionID): \(error)")
@@ -182,8 +186,7 @@ private func run(_ command: CLICommand) throws {
     case .stop:
         print("codex-pet-link: \(try service.stop() ? "stopped" : "notLoaded")")
     case .restart:
-        _ = try service.stop()
-        print("codex-pet-link: \(try service.ensure().rawValue)")
+        print("codex-pet-link: \(try service.restart().rawValue)")
     case let .status(json):
         let status = ServiceStatus(
             loaded: service.isLoaded(),

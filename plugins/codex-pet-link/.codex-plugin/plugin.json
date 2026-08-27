@@ -1,6 +1,6 @@
 {
   "name": "codex-pet-link",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Broadcast Codex task titles and activity phases to a Rokid cyber pet over Bluetooth.",
   "author": {
     "name": "sengmitnick"

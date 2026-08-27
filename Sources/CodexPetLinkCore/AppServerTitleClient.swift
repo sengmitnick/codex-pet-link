@@ -83,7 +83,7 @@ public final class AppServerProcessTransport: AppServerRequesting, @unchecked Se
                     "clientInfo": [
                         "name": "codex-pet-link",
                         "title": "Codex Pet Link",
-                        "version": "0.2.0",
+                        "version": "0.2.1",
                     ],
                 ],
                 timeout: timeout

@@ -19,6 +19,7 @@ Codex Pet Link 把 Mac 上的 Codex 任务活动通过 Bluetooth LE 发给 Rokid
 - 任务标题：优先使用 Codex App Server 的 `thread.name`，尚未生成时使用经过清洗和截断的用户意图。
 - 执行阶段：正在思考、正在运行命令、正在修改文件、正在搜索、等待确认、已完成或遇到问题。
 - 多任务：像 Codex Pet 一样发送完整活动托盘，按需处理、异常、运行、完成排序；进行中的任务不会被刚完成的任务压到下面，每条都包含任务标题和最近活动。
+- 完成同步：Helper 会按每个 Codex session 的 `task_started` / `task_complete` 本地事件校正 Hooks 状态，并在重启后从有界文件尾恢复最近 30 分钟的运行与完成任务；不会从头重放数百 MB 的历史记录。已完成任务显示 `已完成`，不会永久停在上一次工具阶段。
 - 最近活动：区分“正在运行命令”和“已运行命令”、“正在修改文件”和“已修改文件”，不会在工具结束后立刻退回笼统的“工作中”。
 - 在线状态：眼镜右上角只显示 `Codex 在线`；任务活动显示在宠物活动托盘和底栏。
 - 多任务显示：最多四张卡；五个及以上任务显示前三张详情和一张数量摘要。底栏额外任务数独立显示，不会被长标题省略。
@@ -48,6 +49,8 @@ codex-pet-link privacy titles-on
 
 `doctor` 会输出当前 `bluetooth` / `advertisedName`，可用它核对眼镜候选列表中的电脑。
 
+`restart` 会等待旧 launchd 实例确认退出后再启动新版本；安装脚本升级 Helper 时不需要额外补跑 `ensure`。
+
 开发和真机测试见 [INSTALL.md](INSTALL.md)，协议见 [docs/protocol.md](docs/protocol.md)。
 
 ## 兼容性
@@ -60,3 +63,5 @@ codex-pet-link privacy titles-on
 蓝牙只覆盖本地距离；本项目不提供互联网中继。
 
 Helper 的 LaunchAgent 会显式加入 Codex Desktop、Homebrew 和系统命令目录。不要依赖登录 Shell 的 `PATH`；否则系统服务虽在线，App Server 标题查询仍会失败并退回临时标题。
+
+状态快照会先于标题补全立即发送；Helper 每轮最多查询一个官方标题，单个慢查询不会阻塞整组任务刷新。

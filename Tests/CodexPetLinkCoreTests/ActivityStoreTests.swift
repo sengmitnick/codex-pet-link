@@ -3,6 +3,37 @@ import XCTest
 @testable import CodexPetLinkCore
 
 final class ActivityStoreTests: XCTestCase {
+    func testSessionStateReconciliationMarksOnlyCompletedTaskReady() {
+        let now = Date(timeIntervalSince1970: 1_000)
+        var store = ActivityStore()
+        store.apply(event(session: "running", title: "运行中", state: .running, phase: .runningCommand, time: now.timeIntervalSince1970))
+        store.apply(event(session: "completed", title: "已结束", state: .running, phase: .modifyingFiles, time: now.timeIntervalSince1970))
+
+        store.reconcileSessionStates([
+            "running": .running,
+            "completed": .ready,
+        ], at: now.addingTimeInterval(10))
+
+        let activities = store.snapshot(now: now.addingTimeInterval(10)).activities
+        XCTAssertEqual(activities.first(where: { $0.sessionID == "running" })?.phase, .runningCommand)
+        XCTAssertEqual(activities.first(where: { $0.sessionID == "completed" })?.state, .ready)
+        XCTAssertEqual(activities.first(where: { $0.sessionID == "completed" })?.phase, .completed)
+    }
+
+    func testRecentSessionRecoveryAddsTaskMissingFromHookMemory() {
+        let now = Date(timeIntervalSince1970: 1_000)
+        var store = ActivityStore()
+
+        store.mergeSessionActivities([
+            CodexSessionActivity(sessionID: "completed", state: .ready, updatedAt: now),
+        ])
+
+        let activity = store.snapshot(now: now).primary
+        XCTAssertEqual(activity?.sessionID, "completed")
+        XCTAssertEqual(activity?.title, "")
+        XCTAssertEqual(activity?.state, .ready)
+        XCTAssertEqual(activity?.phase, .completed)
+    }
     func testFallbackShowsActionWhenHookActivityIsMissing() {
         let snapshot = HookFallbackActivity.apply(
             to: TaskActivitySnapshot(activities: []),

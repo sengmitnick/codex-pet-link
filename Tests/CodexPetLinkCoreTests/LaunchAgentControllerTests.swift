@@ -49,6 +49,19 @@ final class LaunchAgentControllerTests: XCTestCase {
         XCTAssertEqual(runner.calls.last, ["bootout", "gui/502/com.rokid.codex-pet-link"])
     }
 
+    func testRestartWaitsForBootoutToFinishBeforeBootstrap() throws {
+        let runner = RecordingLaunchRunner(results: [0, 0, 0, 113, 113, 0])
+        let controller = LaunchAgentController(paths: temporaryPaths(), uid: 503, runner: runner)
+
+        XCTAssertEqual(
+            try controller.restart(maxWaitAttempts: 3, waitInterval: 0),
+            .started
+        )
+        XCTAssertEqual(runner.calls.map { $0.first ?? "" }, [
+            "print", "bootout", "print", "print", "print", "bootstrap",
+        ])
+    }
+
     private func temporaryPaths() -> ServicePaths {
         ServicePaths(homeDirectory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
     }
